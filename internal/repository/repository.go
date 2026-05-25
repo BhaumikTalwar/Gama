@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/BhaumikTalwar/Gama/internal/caching"
 	db "github.com/BhaumikTalwar/Gama/internal/db/gen/sqlc"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/mgtv-tech/jetcache-go"
 )
 
 type Repositories struct {
@@ -37,10 +37,12 @@ func NewRepositories(
 
 func SetupPostgresRepositories(
 	pool *pgxpool.Pool,
-	cache cache.Cache,
+	cache caching.CacheService,
+	versionMgr *caching.VersionManager,
+	namespace string,
 ) *Repositories {
 	q := db.New(pool)
-	base := NewBaseRepo(q, cache)
+	base := NewBaseRepo(q, cache, versionMgr, namespace)
 	return NewRepositories(pool, base)
 }
 
