@@ -1,0 +1,84 @@
+app:
+    app_name: Gama
+    env: dev
+    cors_addresses:
+        - http://localhost:3000
+        - http://127.0.0.1:3000
+        - http://localhost:5173
+        - http://127.0.0.1:5173
+    app_secret: l1BW57sdHlFrqDMbY6cl5NHT-9fQtXIC40oscI5ojpQ=
+    jwt_key: HrLND2SP7Wlwl3IxzepcpwUmwQIQtW9UhK6kVHJVFrc=
+    aes_key: gImxt5j0M_a0JHRYP2B8ZD8hTE5cLlpmQD2pxmLr24o=
+    mfa_sms: false
+    access_token_duration: 15m0s
+    refresh_token_duration: 24h0m0s
+http:
+    host: 0.0.0.0
+    port: "8080"
+    read_timeout: 10s
+    read_header_timeout: 5s
+    write_timeout: 15s
+    idle_timeout: 2m0s
+    max_header_bytes: 1048576
+    shutdown_timeout: 10s
+    keep_alive: true
+database: postgres
+logging:
+    level: debug
+    format: json
+    output: stdout
+    file_path: ./logs/app.log
+    max_size_mb: 100
+    max_backups: 5
+    max_age_days: 30
+    compress: true
+    add_source: true
+postgres:
+    host: localhost
+    port: 5432
+    ssl_mode: disable
+    ssl_cert_path: ""
+    ssl_key_path: ""
+    ssl_ca_path: ""
+    max_conns: 10
+    min_conns: 2
+    max_conn_idle_time: 15m0s
+    acquire_timeout: 30s
+    connect_timeout: 10s
+    statement_timeout: 0s
+    idle_txn_timeout: 1m0s
+    keep_alive_interval: 1m0s
+    slow_query_threshold: 1m0s
+    keep_alive: true
+redis:
+    host: localhost
+    password: ""
+    port: 6379
+    db: 0
+    pool_size: 10
+    min_idle_conns: 2
+    use_tls: false
+    dial_timeout: 5s
+    read_timeout: 3s
+    write_timeout: 3s
+    tls_cert_file: ""
+    tls_key_file: ""
+    tls_ca_file: ""
+cache:
+    namespace: app_cache
+    enable_local: true
+    local_size: 400
+    local_ttl: 5
+    codec: json
+s3:
+    endpoint: http://minio:9000
+    region: us-east-1
+    access_key: "minioadmin"
+    secret_key: "minioadmin"
+    use_ssl: false
+    presigned_url_ttl: 3600
+    public_bucket: gama-public
+    private_bucket: gama-private
+    public_base_url: ""
+otp:
+    api_key: "test_key"
