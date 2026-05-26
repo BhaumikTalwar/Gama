@@ -1,8 +1,10 @@
 package routes
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/BhaumikTalwar/Gama/config"
 	"github.com/BhaumikTalwar/Gama/internal/middleware"
@@ -45,7 +47,9 @@ func SetupRouter(
 
 	r.GET("/health", func(c *gin.Context) {
 		if healthChecker != nil {
-			response := healthChecker.Check(c.Request.Context())
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			response := healthChecker.Check(ctx)
 			status := http.StatusOK
 			if response.Status == "unhealthy" {
 				status = http.StatusServiceUnavailable

@@ -8,8 +8,10 @@ import (
 
 	"github.com/BhaumikTalwar/Gama/config"
 	"github.com/mgtv-tech/jetcache-go"
+	pstats "github.com/mgtv-tech/jetcache-go-plugin/stats"
 	"github.com/mgtv-tech/jetcache-go/local"
 	"github.com/mgtv-tech/jetcache-go/remote"
+	"github.com/mgtv-tech/jetcache-go/stats"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -18,8 +20,9 @@ func NewJetCacheInstance(redisCl *redis.Client, cacheConfig *config.CacheConfig,
 		return nil, fmt.Errorf("redis instance is required for the setup")
 	}
 
+	cacheName := cacheConfig.CacheNamespace
 	opts := []cache.Option{}
-	opts = append(opts, cache.WithName(cacheConfig.CacheNamespace))
+	opts = append(opts, cache.WithName(cacheName))
 	opts = append(opts, cache.WithRemote(remote.NewGoRedisV9Adapter(redisCl)))
 
 	if cacheConfig.EnableLocalCache {
@@ -27,6 +30,15 @@ func NewJetCacheInstance(redisCl *redis.Client, cacheConfig *config.CacheConfig,
 		localCache := local.NewFreeCache(local.Size(cacheConfig.LocalCacheSize), ttl)
 		opts = append(opts, cache.WithLocal(localCache))
 	}
+
+	var handlers []stats.Handler
+	handlers = append(handlers, stats.NewStatsLogger(cacheName))
+	if config.GetTelemetryConfig().EnableCacheMetrics {
+		handlers = append(handlers, pstats.NewPrometheus(cacheName))
+	}
+	opts = append(opts, cache.WithStatsHandler(
+		stats.NewHandles(false, handlers...),
+	))
 
 	if len(notFoundErr) != 0 {
 		opts = append(opts, cache.WithErrNotFound(notFoundErr[0]))

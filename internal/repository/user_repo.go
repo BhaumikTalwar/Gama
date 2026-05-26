@@ -84,7 +84,15 @@ func (r *UserRepo) Update(ctx context.Context, arg db.UpdateUserParams) (*db.Use
 }
 
 func (r *UserRepo) UpdatePassword(ctx context.Context, arg db.UpdateUserPasswordParams) error {
-	return r.db.UpdateUserPassword(ctx, arg)
+	err := r.db.UpdateUserPassword(ctx, arg)
+	if err != nil {
+		return err
+	}
+
+	_ = r.TouchEntity(ctx, "user")
+	_ = r.InvalidateCache(ctx, r.keyGen.Simple("user", "global", "list"))
+
+	return nil
 }
 
 func (r *UserRepo) ListUsers(ctx context.Context, arg db.ListUsersParams) ([]db.User, error) {

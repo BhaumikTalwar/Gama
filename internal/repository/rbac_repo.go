@@ -49,7 +49,7 @@ func (r *RBACRepo) AssignRole(ctx context.Context, arg db.AssignRoleToUserParams
 	}
 
 	_ = r.TouchEntity(ctx, "role")
-	_ = r.InvalidateCache(ctx, r.keyGen.Simple("role", "global", "*"))
+	_ = r.InvalidateCache(ctx, r.keyGen.Simple("role", "global", ""))
 
 	return &role, nil
 }
@@ -61,7 +61,7 @@ func (r *RBACRepo) RevokeRoleFromUser(ctx context.Context, arg db.RevokeRoleFrom
 	}
 
 	_ = r.TouchEntity(ctx, "role")
-	_ = r.InvalidateCache(ctx, r.keyGen.Simple("role", "global", "*"))
+	_ = r.InvalidateCache(ctx, r.keyGen.Simple("role", "global", ""))
 
 	return nil
 }
@@ -100,7 +100,7 @@ func (r *RBACRepo) DeleteRole(ctx context.Context, id int32) error {
 	_ = r.TouchEntity(ctx, "role")
 	_ = r.InvalidateCache(ctx, r.keyGen.WithParams(r.keyGen.Simple("role", fmt.Sprintf("%d", id), "detail")))
 	_ = r.InvalidateCache(ctx, r.keyGen.Simple("role", "global", "list"))
-	_ = r.InvalidateCache(ctx, r.keyGen.Simple("role", "global", "*"))
+	_ = r.InvalidateCache(ctx, r.keyGen.Simple("role", "global", ""))
 
 	return nil
 }

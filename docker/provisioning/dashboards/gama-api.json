@@ -375,8 +375,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "increase(Gama_cache_hits_total[1m])",
-          "legendFormat": "Cache Hits",
+          "expr": "sum(rate(cache_handle_total{cache_type=\"total\", method=\"hit\"}[1m]))",
+          "legendFormat": "Cache Hits/s",
           "refId": "A"
         },
         {
@@ -384,12 +384,12 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "increase(Gama_cache_misses_total[1m])",
-          "legendFormat": "Cache Misses",
+          "expr": "sum(rate(cache_handle_total{cache_type=\"total\", method=\"miss\"}[1m]))",
+          "legendFormat": "Cache Misses/s",
           "refId": "B"
         }
       ],
-      "title": "Cache Hit/Miss Rate",
+      "title": "Cache Hit/Miss Rate (per second)",
       "type": "timeseries"
     },
     {
@@ -491,8 +491,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "Gama_db_pool_empty_current",
-          "legendFormat": "Empty (current)",
+          "expr": "Gama_db_pool_acquire_duration_seconds",
+          "legendFormat": "Avg Acquire Duration (s)",
           "refId": "C"
         },
         {
@@ -598,7 +598,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "Gama_process_resident_memory_bytes",
+          "expr": "process_resident_memory_bytes",
           "legendFormat": "Resident Memory (process)",
           "refId": "B"
         },
@@ -610,9 +610,214 @@
           "expr": "Gama_system_goroutines",
           "legendFormat": "Goroutines",
           "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "Gama_system_memory_sys_bytes",
+          "legendFormat": "System Memory",
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "Gama_system_gc_pause_duration_seconds",
+          "legendFormat": "Last GC Pause (s)",
+          "refId": "E"
         }
       ],
       "title": "System Resources",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(cache_handle_total{cache_type=\"total\", method=\"hit\"}[5m])) / (sum(rate(cache_handle_total{cache_type=\"total\", method=\"hit\"}[5m])) + sum(rate(cache_handle_total{cache_type=\"total\", method=\"miss\"}[5m])))",
+          "legendFormat": "Cache Hit Ratio (5m)",
+          "refId": "A"
+        }
+      ],
+      "title": "Cache Hit Ratio",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "Gama_db_pool_acquire_duration_seconds",
+          "legendFormat": "Avg Acquire Duration (15s window)",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(Gama_db_pool_connections)",
+          "legendFormat": "Total Connections",
+          "refId": "B"
+        }
+      ],
+      "title": "DB Acquire Duration",
       "type": "timeseries"
     }
   ],

@@ -6,12 +6,13 @@ app:
         - http://127.0.0.1:3000
         - http://localhost:5173
         - http://127.0.0.1:5173
-    app_secret: l1BW57sdHlFrqDMbY6cl5NHT-9fQtXIC40oscI5ojpQ=
-    jwt_key: HrLND2SP7Wlwl3IxzepcpwUmwQIQtW9UhK6kVHJVFrc=
-    aes_key: gImxt5j0M_a0JHRYP2B8ZD8hTE5cLlpmQD2pxmLr24o=
+    app_secret: Vu8QgZZA8VFGWMmZvCqR5D9Gonwd4XFeKNgBL4Q9eDs=
+    jwt_key: P52KqFSFZSaBNB2-WjE3t4VSN23zSWSbBgbBvqYC5AU=
+    aes_key: cUlVDJ07H6AjnJViVwjE36IVwa7JGb4CsaSd-LuQna8=
     mfa_sms: false
     access_token_duration: 15m0s
     refresh_token_duration: 24h0m0s
+    refresh_rotation_threshold: 1h0m0s
 http:
     host: 0.0.0.0
     port: "8080"

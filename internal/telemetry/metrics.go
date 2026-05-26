@@ -16,31 +16,24 @@ type Metrics struct {
 	HTTPInFlight        prometheus.Gauge
 
 	DBPoolConnections     *prometheus.GaugeVec
-	DBPoolEmptyCurrent    prometheus.Gauge
 	DBPoolAcquiresTotal   prometheus.Counter
-	DBPoolAcquireDuration prometheus.Histogram
+	DBPoolAcquireDuration prometheus.Gauge
 	DBPoolEmptyAttempts   prometheus.Counter
-
-	CacheHits     prometheus.Counter
-	CacheMisses   prometheus.Counter
-	CacheHitRatio prometheus.Gauge
 
 	SystemMemAlloc   prometheus.Gauge
 	SystemMemSys     prometheus.Gauge
 	SystemGoroutines prometheus.Gauge
 	SystemGCDuration prometheus.Gauge
+
+	prevAcquireCount      int64
+	prevEmptyAcquireCount int64
+	prevAcquireDuration   time.Duration
 }
 
 func NewMetrics(serviceName string) *Metrics {
 	m := &Metrics{
 		Registry: prometheus.NewRegistry(),
 	}
-
-	m.Registry.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{
-		Namespace: serviceName,
-	}))
-
-	m.Registry.MustRegister(prometheus.NewGoCollector())
 
 	m.HTTPRequestsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: serviceName,
@@ -75,14 +68,6 @@ func NewMetrics(serviceName string) *Metrics {
 	}, []string{"state"})
 	m.Registry.MustRegister(m.DBPoolConnections)
 
-	m.DBPoolEmptyCurrent = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: serviceName,
-		Subsystem: "db",
-		Name:      "pool_empty_current",
-		Help:      "Current number of failed attempts to acquire due to empty pool",
-	})
-	m.Registry.MustRegister(m.DBPoolEmptyCurrent)
-
 	m.DBPoolAcquiresTotal = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: serviceName,
 		Subsystem: "db",
@@ -91,12 +76,11 @@ func NewMetrics(serviceName string) *Metrics {
 	})
 	m.Registry.MustRegister(m.DBPoolAcquiresTotal)
 
-	m.DBPoolAcquireDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
+	m.DBPoolAcquireDuration = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: serviceName,
 		Subsystem: "db",
 		Name:      "pool_acquire_duration_seconds",
 		Help:      "Time to acquire a connection from pool",
-		Buckets:   []float64{.001, .005, .01, .025, .05, .1, .25, .5, 1},
 	})
 	m.Registry.MustRegister(m.DBPoolAcquireDuration)
 
@@ -107,30 +91,6 @@ func NewMetrics(serviceName string) *Metrics {
 		Help:      "Total number of failed attempts to acquire a connection due to empty pool",
 	})
 	m.Registry.MustRegister(m.DBPoolEmptyAttempts)
-
-	m.CacheHits = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: serviceName,
-		Subsystem: "cache",
-		Name:      "hits_total",
-		Help:      "Total number of cache hits",
-	})
-	m.Registry.MustRegister(m.CacheHits)
-
-	m.CacheMisses = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: serviceName,
-		Subsystem: "cache",
-		Name:      "misses_total",
-		Help:      "Total number of cache misses",
-	})
-	m.Registry.MustRegister(m.CacheMisses)
-
-	m.CacheHitRatio = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: serviceName,
-		Subsystem: "cache",
-		Name:      "hit_ratio",
-		Help:      "Cache hit ratio (0-1)",
-	})
-	m.Registry.MustRegister(m.CacheHitRatio)
 
 	m.SystemMemAlloc = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: serviceName,
@@ -184,25 +144,25 @@ func (m *Metrics) RecordDBPoolStats(stats DBPoolStats) {
 	m.DBPoolConnections.WithLabelValues("acquired").Set(float64(stats.AcquiredConnections))
 	m.DBPoolConnections.WithLabelValues("idle").Set(float64(stats.IdleConnections))
 	m.DBPoolConnections.WithLabelValues("constructing").Set(float64(stats.ConstructingConnections))
-	m.DBPoolEmptyCurrent.Set(float64(stats.EmptyAttempts))
 
-	if stats.AcquiredConnections > 0 || stats.IdleConnections > 0 {
-		ratio := float64(stats.AcquiredConnections) / float64(stats.AcquiredConnections+stats.IdleConnections)
-		m.CacheHitRatio.Set(ratio)
+	deltaAcquires := stats.TotalAcquired - m.prevAcquireCount
+	if deltaAcquires > 0 {
+		m.DBPoolAcquiresTotal.Add(float64(deltaAcquires))
 	}
-}
+	m.prevAcquireCount = stats.TotalAcquired
 
-func (m *Metrics) RecordCacheHit() {
-	m.CacheHits.Inc()
-	m.updateCacheRatio()
-}
+	deltaEmpty := stats.EmptyAttempts - m.prevEmptyAcquireCount
+	if deltaEmpty > 0 {
+		m.DBPoolEmptyAttempts.Add(float64(deltaEmpty))
+	}
+	m.prevEmptyAcquireCount = stats.EmptyAttempts
 
-func (m *Metrics) RecordCacheMiss() {
-	m.CacheMisses.Inc()
-	m.updateCacheRatio()
-}
-
-func (m *Metrics) updateCacheRatio() {
+	deltaDuration := stats.TotalAcquireDuration - m.prevAcquireDuration
+	if deltaAcquires > 0 {
+		avgDuration := deltaDuration.Seconds() / float64(deltaAcquires)
+		m.DBPoolAcquireDuration.Set(avgDuration)
+	}
+	m.prevAcquireDuration = stats.TotalAcquireDuration
 }
 
 func (m *Metrics) RecordSystemMetrics() {
@@ -212,6 +172,7 @@ func (m *Metrics) RecordSystemMetrics() {
 	m.SystemMemAlloc.Set(float64(memStats.Alloc))
 	m.SystemMemSys.Set(float64(memStats.Sys))
 	m.SystemGoroutines.Set(float64(runtime.NumGoroutine()))
+	m.SystemGCDuration.Set(float64(memStats.PauseNs[(memStats.NumGC+255)%256]) / float64(time.Second))
 }
 
 type DBPoolStats struct {
@@ -220,6 +181,7 @@ type DBPoolStats struct {
 	ConstructingConnections int64
 	EmptyAttempts           int64
 	TotalAcquired           int64
+	TotalAcquireDuration    time.Duration
 }
 
 func statusCodeToString(status int) string {

@@ -9,15 +9,15 @@ import (
 
 func TestAppConfig_ValidateValidDev(t *testing.T) {
 	cfg := &AppConfig{
-		AppName:                   "TestApp",
-		Env:                       "dev",
-		CorsAddresses:             []string{"http://localhost:3000"},
-		AppSecret:                 "12345678901234567890123456789012",
-		JWTKey:                    "12345678901234567890123456789012",
-		AESKey:                    "12345678901234567890123456789012",
-		AccessTokenDuration:       15 * time.Minute,
-		RefreshTokenDuration:      24 * time.Hour,
-		RefreshRotationThreshold:  1 * time.Hour,
+		AppName:                  "TestApp",
+		Env:                      "dev",
+		CorsAddresses:            []string{"http://localhost:3000"},
+		AppSecret:                "12345678901234567890123456789012",
+		JWTKey:                   "12345678901234567890123456789012",
+		AESKey:                   "12345678901234567890123456789012",
+		AccessTokenDuration:      15 * time.Minute,
+		RefreshTokenDuration:     24 * time.Hour,
+		RefreshRotationThreshold: 1 * time.Hour,
 	}
 
 	err := cfg.validate()
@@ -26,15 +26,15 @@ func TestAppConfig_ValidateValidDev(t *testing.T) {
 
 func TestAppConfig_ValidateValidProd(t *testing.T) {
 	cfg := &AppConfig{
-		AppName:                   "TestApp",
-		Env:                       "PROD",
-		CorsAddresses:             []string{"http://localhost:3000"},
-		AppSecret:                 "12345678901234567890123456789012",
-		JWTKey:                    "12345678901234567890123456789012",
-		AESKey:                    "12345678901234567890123456789012",
-		AccessTokenDuration:       15 * time.Minute,
-		RefreshTokenDuration:      24 * time.Hour,
-		RefreshRotationThreshold:  1 * time.Hour,
+		AppName:                  "TestApp",
+		Env:                      "PROD",
+		CorsAddresses:            []string{"http://localhost:3000"},
+		AppSecret:                "12345678901234567890123456789012",
+		JWTKey:                   "12345678901234567890123456789012",
+		AESKey:                   "12345678901234567890123456789012",
+		AccessTokenDuration:      15 * time.Minute,
+		RefreshTokenDuration:     24 * time.Hour,
+		RefreshRotationThreshold: 1 * time.Hour,
 	}
 
 	err := cfg.validate()

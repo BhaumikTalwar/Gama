@@ -20,6 +20,7 @@ import (
 	"github.com/BhaumikTalwar/Gama/internal/telemetry"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -110,6 +111,7 @@ func RunServer() {
 				ConstructingConnections: int64(stats.ConstructingConns()),
 				EmptyAttempts:           stats.EmptyAcquireCount(),
 				TotalAcquired:           stats.AcquireCount(),
+				TotalAcquireDuration:    stats.AcquireDuration(),
 			}
 		}, 15*time.Second)
 	}
@@ -142,6 +144,6 @@ func RunServer() {
 
 func prometheusHandler(m *telemetry.Metrics) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		promhttp.HandlerFor(m.Registry, promhttp.HandlerOpts{}).ServeHTTP(c.Writer, c.Request)
+		promhttp.HandlerFor(prometheus.Gatherers{m.Registry, prometheus.DefaultGatherer}, promhttp.HandlerOpts{}).ServeHTTP(c.Writer, c.Request)
 	}
 }
