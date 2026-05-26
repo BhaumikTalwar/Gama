@@ -20,7 +20,10 @@ func NewUserRepo(base *BaseRepo) *UserRepo {
 
 func (r *UserRepo) GetByID(ctx context.Context, id uuid.UUID) (*db.User, error) {
 	user, err := r.db.GetUserByID(ctx, id)
-	return &user, err
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
 
 func (r *UserRepo) GetByEmail(ctx context.Context, email string) (*db.User, error) {

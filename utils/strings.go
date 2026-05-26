@@ -53,7 +53,7 @@ func IsDevEnv(mode string) bool {
 }
 
 func IsSubsetSlice(slice1, slice2 []string) bool {
-	if len(slice1) < len(slice2) {
+	if len(slice1) > len(slice2) {
 		return false
 	}
 

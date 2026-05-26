@@ -300,10 +300,14 @@ func (h *AuthHandler) InitMFASetup(c *gin.Context) {
 
 	appConfig := config.GetAppConfig()
 	if req.Method == string(db.MfaTypeTotp) {
-		key, _ := totp.Generate(totp.GenerateOpts{
+		key, err := totp.Generate(totp.GenerateOpts{
 			Issuer:      appConfig.AppName,
 			AccountName: user.Email,
 		})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to generate TOTP key"})
+			return
+		}
 
 		encryptedSecret, e := utils.EncryptString([]byte(appConfig.AESKey), key.Secret())
 		if e != nil {
@@ -319,7 +323,11 @@ func (h *AuthHandler) InitMFASetup(c *gin.Context) {
 		})
 
 		var buf bytes.Buffer
-		img, _ := key.Image(200, 200)
+		img, err := key.Image(200, 200)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to generate TOTP QR image"})
+			return
+		}
 		png.Encode(&buf, img)
 
 		c.JSON(http.StatusOK, gin.H{
@@ -486,11 +494,14 @@ func (h *AuthHandler) FinalizeMFASetup(c *gin.Context) {
 		BackupCodes: backupBcryptCodes,
 	})
 
-	user, _ := h.repos.User.GetByID(c.Request.Context(), userID)
+	user, err := h.repos.User.GetByID(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch user"})
+		return
+	}
 	rolesRows, err := h.repos.RBAC.GetUserRoles(c.Request.Context(), user.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch user roles"})
-		c.Abort()
 		return
 	}
 
@@ -615,11 +626,14 @@ func (h *AuthHandler) VerifyMFA(c *gin.Context) {
 		return
 	}
 
-	user, _ := h.repos.User.GetByID(c.Request.Context(), userID)
+	user, err := h.repos.User.GetByID(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch user"})
+		return
+	}
 	rolesRows, err := h.repos.RBAC.GetUserRoles(c.Request.Context(), user.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch user roles"})
-		c.Abort()
 		return
 	}
 
