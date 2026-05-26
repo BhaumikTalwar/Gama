@@ -713,63 +713,6 @@ func (h *AuthHandler) ResendMFAOTP(c *gin.Context) {
 }
 
 func (h *AuthHandler) Refresh(c *gin.Context) {
-	isProd := utils.EqualFoldASCII(config.GetAppConfig().Env, "prod")
-	refToken, err := c.Cookie(RefreshTokenCookie)
-	if err != nil || refToken == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Refresh token not found"})
-		return
-	}
-
-	tokenModel, err := h.repos.Token.GetRefreshToken(c.Request.Context(), HashRefToken(refToken, config.GetAppConfig().AppSecret))
-	if err != nil || tokenModel.Revoked {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Refresh token not Invalid"})
-		return
-	}
-
-	if tokenModel.ExpiresAt.Unix() <= time.Now().Unix() {
-		reason := "Expired"
-		_ = h.repos.Token.RevokeRefreshToken(c.Request.Context(), db.RevokeRefreshTokenParams{
-			ID:            tokenModel.ID,
-			RevokedReason: &reason,
-		})
-
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Refresh token expired"})
-		ClearAuthCookies(c, isProd)
-		return
-	}
-
-	user, err := h.repos.User.GetByID(c.Request.Context(), tokenModel.UserID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "No Such User Exist"})
-		return
-	}
-
-	rolesRows, err := h.repos.RBAC.GetUserRoles(c.Request.Context(), user.ID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch user roles"})
-		c.Abort()
-		return
-	}
-
-	roles := []string{}
-	for _, row := range rolesRows {
-		roles = append(roles, row.Name)
-	}
-
-	accessToken, err := GenerateJWT(user.ID.String(), utils.JoinClean(roles, ","), defaultVer, ScopeAccess)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Token error"})
-		return
-	}
-
-	csrfTk := GenerateCSRFToken([]byte(config.GetAppConfig().AppSecret))
-	SetAccessTokenCookie(c, accessToken, int(config.GetAppConfig().AccessTokenDuration.Seconds()), isProd)
-	SetCsrfCookie(c, csrfTk, int(config.GetAppConfig().AccessTokenDuration.Seconds()), isProd)
-
-	c.JSON(http.StatusOK, gin.H{"message": "Set new Access Token"})
-}
-
-func (h *AuthHandler) RefreshRotate(c *gin.Context) {
 	appConfig := config.GetAppConfig()
 	isProd := utils.EqualFoldASCII(appConfig.Env, "prod")
 
@@ -805,16 +748,6 @@ func (h *AuthHandler) RefreshRotate(c *gin.Context) {
 		return
 	}
 
-	rotatedReason := "Rotated"
-	err = h.repos.Token.RevokeRefreshToken(c.Request.Context(), db.RevokeRefreshTokenParams{
-		ID:            tokenModel.ID,
-		RevokedReason: &rotatedReason,
-	})
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to rotate token"})
-		return
-	}
-
 	rolesRows, err := h.repos.RBAC.GetUserRoles(c.Request.Context(), user.ID)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch roles"})
@@ -825,24 +758,44 @@ func (h *AuthHandler) RefreshRotate(c *gin.Context) {
 		roles = append(roles, row.Name)
 	}
 
-	newAccessToken, err := GenerateJWT(user.ID.String(), utils.JoinClean(roles, ","), defaultVer, ScopeAccess)
+	accessToken, err := GenerateJWT(user.ID.String(), utils.JoinClean(roles, ","), defaultVer, ScopeAccess)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Token generation error"})
 		return
 	}
 
-	userAgent := c.Request.UserAgent()
-	tkParams, newRefTokenStr := GetRefreshTokenParam(user.ID, &userAgent, nil)
+	csrfTk := GenerateCSRFToken([]byte(appConfig.AppSecret))
 
-	_, err = h.repos.Token.CreateRefreshToken(c.Request.Context(), *tkParams)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": "Failed to save new refresh token"})
+	remainingTTL := time.Until(tokenModel.ExpiresAt)
+	if remainingTTL < appConfig.RefreshRotationThreshold {
+		rotatedReason := "Rotated"
+		err = h.repos.Token.RevokeRefreshToken(c.Request.Context(), db.RevokeRefreshTokenParams{
+			ID:            tokenModel.ID,
+			RevokedReason: &rotatedReason,
+		})
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to rotate token"})
+			return
+		}
+
+		userAgent := c.Request.UserAgent()
+		tkParams, newRefTokenStr := GetRefreshTokenParam(user.ID, &userAgent, nil)
+
+		_, err = h.repos.Token.CreateRefreshToken(c.Request.Context(), *tkParams)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": "Failed to save new refresh token"})
+			return
+		}
+
+		SetAuthCookies(c, accessToken, newRefTokenStr, csrfTk, isProd)
+		c.JSON(http.StatusOK, gin.H{"message": "Token rotated"})
 		return
 	}
 
-	csrfTk := GenerateCSRFToken([]byte(appConfig.AppSecret))
-	SetAuthCookies(c, newAccessToken, newRefTokenStr, csrfTk, isProd)
-	c.JSON(http.StatusOK, gin.H{"message": "Token rotated successfully"})
+	SetAccessTokenCookie(c, accessToken, int(appConfig.AccessTokenDuration.Seconds()), isProd)
+	SetCsrfCookie(c, csrfTk, int(appConfig.RefreshTokenDuration.Seconds()), isProd)
+
+	c.JSON(http.StatusOK, gin.H{"message": "Set new Access Token"})
 }
 
 func (h *AuthHandler) Logout(c *gin.Context) {

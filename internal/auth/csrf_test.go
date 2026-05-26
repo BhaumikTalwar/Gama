@@ -235,7 +235,7 @@ func TestSetRefreshTokenCookie(t *testing.T) {
 	assert.Len(t, cookies, 1)
 	assert.Equal(t, "refresh_token", cookies[0].Name)
 	assert.Equal(t, "refresh_token", cookies[0].Value)
-	assert.Equal(t, "/api/auth/refresh", cookies[0].Path)
+	assert.Equal(t, "/api/v1/auth/refresh", cookies[0].Path)
 	assert.True(t, cookies[0].Secure)
 	assert.True(t, cookies[0].HttpOnly)
 }
@@ -283,7 +283,7 @@ func TestAuthConstants(t *testing.T) {
 	assert.Equal(t, "csrf_token", CSRFCookie)
 	assert.Equal(t, "access_token", AccessTokenCookie)
 	assert.Equal(t, "refresh_token", RefreshTokenCookie)
-	assert.Equal(t, "/api/auth/refresh", refTokenCookiePath)
+	assert.Equal(t, "/api/v1/auth/refresh", refTokenCookiePath)
 	assert.Equal(t, "user_id", CtxUserKey)
 	assert.Equal(t, "user_roles", ctxRolesKey)
 }

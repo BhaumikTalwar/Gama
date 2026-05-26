@@ -15,7 +15,7 @@ func SetupAuthRoutes(r *gin.RouterGroup, repos *repository.Repositories, otpServ
 	authGroup.POST("/register", authHandler.Register)
 	authGroup.POST("/login", authHandler.Login)
 
-	authGroup.POST("/refresh", authHandler.Refresh)
+	authGroup.POST("/refresh", auth.CSRFMiddleware(), authHandler.Refresh)
 	authGroup.POST("/refresh/logout", auth.CSRFMiddleware(), authHandler.Logout)
 
 	mfaGroup := authGroup.Group("/mfa")

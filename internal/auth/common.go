@@ -20,7 +20,7 @@ const (
 	AccessTokenCookie  = "access_token"
 	RefreshTokenCookie = "refresh_token"
 
-	refTokenCookiePath = "/api/auth/refresh"
+	refTokenCookiePath = "/api/v1/auth/refresh"
 
 	CtxUserKey  = "user_id"
 	ctxRolesKey = "user_roles"
@@ -88,7 +88,7 @@ func SetAuthCookies(c *gin.Context, accessToken, refreshToken, csrfToken string,
 	appConfig := config.GetAppConfig()
 	SetAccessTokenCookie(c, accessToken, int(appConfig.AccessTokenDuration.Seconds()), secure)
 	SetRefreshTokenCookie(c, refreshToken, int(appConfig.RefreshTokenDuration.Seconds()), secure)
-	SetCsrfCookie(c, csrfToken, int(appConfig.AccessTokenDuration.Seconds()), secure)
+	SetCsrfCookie(c, csrfToken, int(appConfig.RefreshTokenDuration.Seconds()), secure)
 }
 
 func ClearAuthCookies(c *gin.Context, secure bool) {

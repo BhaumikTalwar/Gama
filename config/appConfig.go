@@ -23,6 +23,8 @@ type AppConfig struct {
 
 	AccessTokenDuration  time.Duration `mapstructure:"access_token_duration" yaml:"access_token_duration"`
 	RefreshTokenDuration time.Duration `mapstructure:"refresh_token_duration" yaml:"refresh_token_duration"`
+
+	RefreshRotationThreshold time.Duration `mapstructure:"refresh_rotation_threshold" yaml:"refresh_rotation_threshold"`
 }
 
 func setAppDefaults(prefix string) {
@@ -39,6 +41,7 @@ func setAppDefaults(prefix string) {
 	viper.SetDefault(prefix+".aes_key", "")
 	viper.SetDefault(prefix+".access_token_duration", "15m")
 	viper.SetDefault(prefix+".refresh_token_duration", "24h")
+	viper.SetDefault(prefix+".refresh_rotation_threshold", "1h")
 }
 
 func registerAppFlags(cmd *cobra.Command, prefix string) {
@@ -50,6 +53,7 @@ func registerAppFlags(cmd *cobra.Command, prefix string) {
 	aesFlag := fmt.Sprintf("%s-aes", prefix)
 	accessDurFlag := fmt.Sprintf("%s-access-token-duration", prefix)
 	refreshDurFlag := fmt.Sprintf("%s-refresh-token-duration", prefix)
+	refreshRotFlag := fmt.Sprintf("%s-refresh-rotation-threshold", prefix)
 
 	cmd.Flags().String(envFlag, "", "Environment (dev/prod)")
 	cmd.Flags().String(corsFlag, "", "Cors Addresses")
@@ -59,6 +63,7 @@ func registerAppFlags(cmd *cobra.Command, prefix string) {
 	cmd.Flags().String(aesFlag, "", "AES encryption key to be used for Encryption")
 	cmd.Flags().String(accessDurFlag, "", "Access Token Duration For JWT Token")
 	cmd.Flags().String(refreshDurFlag, "", "Refresh Token Duration")
+	cmd.Flags().String(refreshRotFlag, "", "Refresh token rotation threshold duration")
 
 	_ = viper.BindPFlag(prefix+".env", cmd.Flags().Lookup(envFlag))
 	_ = viper.BindPFlag(prefix+".cors_addresses", cmd.Flags().Lookup(corsFlag))
@@ -68,6 +73,7 @@ func registerAppFlags(cmd *cobra.Command, prefix string) {
 	_ = viper.BindPFlag(prefix+".aes_key", cmd.Flags().Lookup(aesFlag))
 	_ = viper.BindPFlag(prefix+".access_token_duration", cmd.Flags().Lookup(accessDurFlag))
 	_ = viper.BindPFlag(prefix+".refresh_token_duration", cmd.Flags().Lookup(refreshDurFlag))
+	_ = viper.BindPFlag(prefix+".refresh_rotation_threshold", cmd.Flags().Lookup(refreshRotFlag))
 }
 
 func (c *AppConfig) validate() error {
@@ -101,6 +107,14 @@ func (c *AppConfig) validate() error {
 
 	if len(c.AESKey) < 32 {
 		return errors.New("AES Secret Key Should be atleast 32 bytes long")
+	}
+
+	if c.RefreshRotationThreshold <= 0 {
+		return errors.New("app.refresh_rotation_threshold must be greater than 0")
+	}
+
+	if c.RefreshRotationThreshold >= c.RefreshTokenDuration {
+		return errors.New("app.refresh_rotation_threshold must be less than refresh_token_duration")
 	}
 
 	return nil
