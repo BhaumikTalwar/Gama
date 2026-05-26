@@ -395,3 +395,213 @@ func TestCacheConfig_ValidateLocalCacheDisabled(t *testing.T) {
 	err := cfg.validate()
 	assert.NoError(t, err)
 }
+
+func TestLoggingConfig_ValidateValid(t *testing.T) {
+	cfg := &LoggingConfig{Level: "debug", Format: "json", Output: "stdout"}
+	assert.NoError(t, cfg.validate())
+}
+
+func TestLoggingConfig_ValidateValidText(t *testing.T) {
+	cfg := &LoggingConfig{Level: "info", Format: "text", Output: "file"}
+	assert.NoError(t, cfg.validate())
+}
+
+func TestLoggingConfig_ValidateInvalidLevel(t *testing.T) {
+	cfg := &LoggingConfig{Level: "trace", Format: "json", Output: "stdout"}
+	err := cfg.validate()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "Invalid Logging Level")
+}
+
+func TestLoggingConfig_ValidateEmptyLevel(t *testing.T) {
+	cfg := &LoggingConfig{Level: "", Format: "json", Output: "stdout"}
+	err := cfg.validate()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "Invalid Logging Level")
+}
+
+func TestLoggingConfig_ValidateInvalidFormat(t *testing.T) {
+	cfg := &LoggingConfig{Level: "info", Format: "yaml", Output: "stdout"}
+	err := cfg.validate()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "Invalid Log Format")
+}
+
+func TestLoggingConfig_ValidateInvalidOutput(t *testing.T) {
+	cfg := &LoggingConfig{Level: "info", Format: "json", Output: "console"}
+	err := cfg.validate()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "Invalid Log Output")
+}
+
+func TestLoggingConfig_ValidateCaseInsensitiveLevel(t *testing.T) {
+	cfg := &LoggingConfig{Level: "DEBUG", Format: "json", Output: "stdout"}
+	assert.NoError(t, cfg.validate())
+}
+
+func TestTelemetryConfig_ValidateValid(t *testing.T) {
+	cfg := &TelemetryConfig{TraceSampleRate: 0.5}
+	assert.NoError(t, cfg.validate())
+}
+
+func TestTelemetryConfig_ValidateSampleRateZero(t *testing.T) {
+	cfg := &TelemetryConfig{TraceSampleRate: 0.0}
+	assert.NoError(t, cfg.validate())
+}
+
+func TestTelemetryConfig_ValidateSampleRateOne(t *testing.T) {
+	cfg := &TelemetryConfig{TraceSampleRate: 1.0}
+	assert.NoError(t, cfg.validate())
+}
+
+func TestTelemetryConfig_ValidateSampleRateNegative(t *testing.T) {
+	cfg := &TelemetryConfig{TraceSampleRate: -0.1}
+	err := cfg.validate()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "trace_sample_rate")
+}
+
+func TestTelemetryConfig_ValidateSampleRateTooHigh(t *testing.T) {
+	cfg := &TelemetryConfig{TraceSampleRate: 1.1}
+	err := cfg.validate()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "trace_sample_rate")
+}
+
+func TestPostgresConfig_ValidateValid(t *testing.T) {
+	cfg := &PostgresConfig{Port: 5432}
+	assert.NoError(t, cfg.validate())
+}
+
+func TestPostgresConfig_ValidatePortZero(t *testing.T) {
+	cfg := &PostgresConfig{Port: 0}
+	assert.NoError(t, cfg.validate())
+}
+
+func TestPostgresConfig_ValidatePortNegative(t *testing.T) {
+	cfg := &PostgresConfig{Port: -1}
+	err := cfg.validate()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "Invalid Postgres Port")
+}
+
+func TestPostgresConfig_ValidatePortTooHigh(t *testing.T) {
+	cfg := &PostgresConfig{Port: 65536}
+	err := cfg.validate()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "Invalid Postgres Port")
+}
+
+func TestPostgresConfig_ValidateMaxPort(t *testing.T) {
+	cfg := &PostgresConfig{Port: 65535}
+	assert.NoError(t, cfg.validate())
+}
+
+func TestRedisConfig_ValidateValid(t *testing.T) {
+	cfg := &RedisConfig{RedisPort: 6379}
+	assert.NoError(t, cfg.validate())
+}
+
+func TestRedisConfig_ValidatePortNegative(t *testing.T) {
+	cfg := &RedisConfig{RedisPort: -1}
+	err := cfg.validate()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "Invalid Redis Port")
+}
+
+func TestRedisConfig_ValidatePortTooHigh(t *testing.T) {
+	cfg := &RedisConfig{RedisPort: 65536}
+	err := cfg.validate()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "Invalid Redis Port")
+}
+
+func TestRedisConfig_ValidatePortZero(t *testing.T) {
+	cfg := &RedisConfig{RedisPort: 0}
+	assert.NoError(t, cfg.validate())
+}
+
+func TestS3Config_ValidateValid(t *testing.T) {
+	cfg := &S3Config{
+		Endpoint: "http://localhost:9000", Region: "us-east-1",
+		AccessKey: "key", SecretKey: "secret",
+		PublicBucket: "pub", PrivateBucket: "priv",
+	}
+	assert.NoError(t, cfg.validate())
+}
+
+func TestS3Config_ValidateEmptyEndpoint(t *testing.T) {
+	cfg := &S3Config{Region: "us-east-1", AccessKey: "key", SecretKey: "secret", PublicBucket: "pub", PrivateBucket: "priv"}
+	err := cfg.validate()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "endpoint")
+}
+
+func TestS3Config_ValidateEmptyRegion(t *testing.T) {
+	cfg := &S3Config{Endpoint: "http://localhost:9000", AccessKey: "key", SecretKey: "secret", PublicBucket: "pub", PrivateBucket: "priv"}
+	err := cfg.validate()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "region")
+}
+
+func TestS3Config_ValidateEmptyAccessKey(t *testing.T) {
+	cfg := &S3Config{Endpoint: "http://localhost:9000", Region: "us-east-1", SecretKey: "secret", PublicBucket: "pub", PrivateBucket: "priv"}
+	err := cfg.validate()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "access key")
+}
+
+func TestS3Config_ValidateEmptySecretKey(t *testing.T) {
+	cfg := &S3Config{Endpoint: "http://localhost:9000", Region: "us-east-1", AccessKey: "key", PublicBucket: "pub", PrivateBucket: "priv"}
+	err := cfg.validate()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "secret key")
+}
+
+func TestS3Config_ValidateEmptyPublicBucket(t *testing.T) {
+	cfg := &S3Config{Endpoint: "http://localhost:9000", Region: "us-east-1", AccessKey: "key", SecretKey: "secret", PrivateBucket: "priv"}
+	err := cfg.validate()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "public bucket")
+}
+
+func TestS3Config_ValidateEmptyPrivateBucket(t *testing.T) {
+	cfg := &S3Config{Endpoint: "http://localhost:9000", Region: "us-east-1", AccessKey: "key", SecretKey: "secret", PublicBucket: "pub"}
+	err := cfg.validate()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "private bucket")
+}
+
+func TestS3Config_ValidateMissingOptionalFields(t *testing.T) {
+	cfg := &S3Config{
+		Endpoint: "http://localhost:9000", Region: "us-east-1",
+		AccessKey: "key", SecretKey: "secret",
+		PublicBucket: "pub", PrivateBucket: "priv",
+		UseSSL: true, PresignedURLTTL: 3600, PublicBaseURL: "https://cdn.example.com",
+	}
+	assert.NoError(t, cfg.validate())
+}
+
+func TestOTPConfig_ValidateValid(t *testing.T) {
+	cfg := &OTPConfig{APIKey: "some-api-key"}
+	assert.NoError(t, cfg.validate())
+}
+
+func TestOTPConfig_ValidateEmptyKey(t *testing.T) {
+	cfg := &OTPConfig{APIKey: ""}
+	err := cfg.validate()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "OTP API key")
+}
+
+func TestSqliteConfig_ValidateNoOp(t *testing.T) {
+	cfg := &SqliteConfig{}
+	err := cfg.validate()
+	assert.NoError(t, err)
+}
+
+func TestSqliteConfig_ValidateWithPathStillNoOp(t *testing.T) {
+	cfg := &SqliteConfig{Path: "/data/test.db"}
+	err := cfg.validate()
+	assert.NoError(t, err)
+}

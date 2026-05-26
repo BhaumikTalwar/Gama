@@ -42,7 +42,7 @@ PROD_GO_FLAGS = \
 .PHONY: all init build prod run run-prod clean                    \
 	migrate-up migrate-down migrate-status                        \                      
 	docker-build docker-up docker-down docker-logs migrate-create \
-	sqlc test-coverage 
+	sqlc test-coverage docker-test-up
 all: build
 
 init:
@@ -70,7 +70,7 @@ test-coverage-html:
 	@echo "Report: coverage/coverage.html"
 	@rm -f coverage/unit.out
 
-test-coverage-all:
+test-coverage-all: docker-test-up
 	@echo "Running all tests with cumulative coverage (requires Docker)..."
 	go test -p=1 -tags=integration -cover -count=1 ./...
 	@echo ""
@@ -84,7 +84,7 @@ test-unit:
 	@echo "Running unit tests..."
 	go test -short -count=1 ./...
 
-test-integration:
+test-integration: docker-test-up
 	@echo "Starting test services..."
 	docker-compose up -d postgres redis
 	@echo "Waiting for services to be ready..."
@@ -94,7 +94,7 @@ test-integration:
 	@echo "Stopping test services..."
 	docker-compose stop postgres redis
 
-test-all:
+test-all: docker-test-up
 	@echo "Running all tests..."
 	go test -p=1 -tags=integration -count=1 -v ./...
 
@@ -134,6 +134,9 @@ migrate-status:
 migrate-create:
 	@read -p "Enter migration name: " name; \
 	goose -dir $(MIGRATION_DIR) create $$name sql
+
+docker-test-up:
+	docker-compose up -d postgres minio redis tempo prometheus
 
 docker-build:
 	docker-compose build
