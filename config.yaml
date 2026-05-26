@@ -1,6 +1,6 @@
 app:
     app_name: Gama
-    env: dev
+    env: prod
     cors_addresses:
         - http://localhost:3000
         - http://127.0.0.1:3000
@@ -33,6 +33,19 @@ logging:
     max_age_days: 30
     compress: true
     add_source: true
+telemetry:
+    enabled: true
+    service_name: gama-api
+    environment: dev
+    otlp_endpoint: localhost:4317
+    otlp_endpoint_http: localhost:4318
+    trace_sample_rate: 1.0
+    prometheus_path: /metrics
+    enable_http_metrics: true
+    enable_db_metrics: true
+    enable_cache_metrics: true
+    enable_system_metrics: true
+    export_timeout: 10s
 postgres:
     host: localhost
     port: 5432
@@ -40,9 +53,9 @@ postgres:
     ssl_cert_path: ""
     ssl_key_path: ""
     ssl_ca_path: ""
-    max_conns: 10
-    min_conns: 2
-    max_conn_idle_time: 15m0s
+    max_conns: 50
+    min_conns: 10
+    max_conn_idle_time: 5m0s
     acquire_timeout: 30s
     connect_timeout: 10s
     statement_timeout: 0s
