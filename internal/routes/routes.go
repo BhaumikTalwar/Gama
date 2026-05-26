@@ -9,6 +9,7 @@ import (
 	"github.com/BhaumikTalwar/Gama/internal/repository"
 	"github.com/BhaumikTalwar/Gama/internal/service"
 	"github.com/BhaumikTalwar/Gama/internal/service/Otp"
+	"github.com/BhaumikTalwar/Gama/internal/telemetry"
 	"github.com/BhaumikTalwar/Gama/utils"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/pprof"
@@ -22,6 +23,7 @@ func SetupRouter(
 	s3Store *service.S3Store,
 	otpService otp.OtpService,
 	healthChecker *service.HealthChecker,
+	metrics *telemetry.Metrics,
 ) *gin.Engine {
 	isProd := !utils.IsDevEnv(env)
 	if isProd {
@@ -35,7 +37,11 @@ func SetupRouter(
 	r.Use(middleware.StructuredLoggerSlog(logger))
 	r.Use(middleware.CustomSlogRecovery(logger))
 	r.Use(middleware.CORSMiddleware(config.GetAppConfig().CorsAddresses...))
-	r.Use(gzip.Gzip(gzip.DefaultCompression))
+	r.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedPaths([]string{"/metrics", "/debug/pprof"})))
+
+	if metrics != nil && config.GetTelemetryConfig().EnableHTTPMetrics {
+		r.Use(middleware.MetricsMiddleware(metrics))
+	}
 
 	r.GET("/health", func(c *gin.Context) {
 		if healthChecker != nil {

@@ -37,8 +37,9 @@ type Config struct {
 	App  AppConfig        `mapstructure:"app"`
 	Http HTTPServerConfig `mapstructure:"http"`
 
-	Database DatabaseDriver `mapstructure:"database"`
-	Logging  LoggingConfig  `mapstructure:"logging"`
+	Database  DatabaseDriver  `mapstructure:"database"`
+	Logging   LoggingConfig   `mapstructure:"logging"`
+	Telemetry TelemetryConfig `mapstructure:"telemetry"`
 
 	Sqlite   SqliteConfig   `mapstructure:"sqlite"`
 	Postgres PostgresConfig `mapstructure:"postgres"`
@@ -52,6 +53,7 @@ func SetDefaults() {
 	setAppDefaults("app")
 	setHTTPServerDefaults("http")
 	setLogDefaults("logging")
+	setTelemetryDefaults("telemetry")
 	setPostgressDefaults("postgres")
 	setSqliteDefaults("sqlite")
 	setRedisDefaults("redis")
@@ -66,6 +68,7 @@ func RegisterServeFlags(cmd *cobra.Command) {
 	registerAppFlags(cmd, "app")
 	registerHTTPServerFlags(cmd, "http")
 	registerLogFlags(cmd, "logging")
+	registerTelemetryFlags(cmd, "telemetry")
 	registerSqliteFlags(cmd, "sqlite")
 	registerPostgresFlags(cmd, "postgres")
 	registerRedisFlags(cmd, "redis")
@@ -123,6 +126,10 @@ func (c *Config) Validate() error {
 
 	if err := c.Http.validate(); err != nil {
 		return fmt.Errorf("Error in HTTP Config: %w", err)
+	}
+
+	if err := c.Telemetry.validate(); err != nil {
+		return fmt.Errorf("Error in Telemetry Config: %w", err)
 	}
 
 	if err := c.Postgres.validate(); err != nil {
@@ -272,6 +279,10 @@ func GetS3Config() *S3Config {
 
 func GetOTPConfig() *OTPConfig {
 	return &cfg.OTP
+}
+
+func GetTelemetryConfig() *TelemetryConfig {
+	return &cfg.Telemetry
 }
 
 func GetDatabaseDriver() *DatabaseDriver {
