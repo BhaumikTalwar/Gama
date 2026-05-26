@@ -299,6 +299,8 @@ func DumpConfig() string {
 	tmp.Postgres.Password = redacttext
 	tmp.Redis.RedisPassword = redacttext
 	tmp.OTP.APIKey = redacttext
+	tmp.S3.AccessKey = redacttext
+	tmp.S3.SecretKey = redacttext
 
 	return fmt.Sprintf("%+v\n", tmp)
 }

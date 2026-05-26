@@ -17,12 +17,18 @@ func NewMfaRepo(base *BaseRepo) *MFARepo {
 
 func (r *MFARepo) GetSettings(ctx context.Context, userID uuid.UUID) (*db.GetUserMFASettingsRow, error) {
 	val, err := r.db.GetUserMFASettings(ctx, userID)
-	return &val, err
+	if err != nil {
+		return nil, err
+	}
+	return &val, nil
 }
 
 func (r *MFARepo) UpsertSettings(ctx context.Context, args db.UpsertMFASettingsParams) (*db.UserMfaSetting, error) {
 	val, err := r.db.UpsertMFASettings(ctx, args)
-	return &val, err
+	if err != nil {
+		return nil, err
+	}
+	return &val, nil
 }
 
 func (r *MFARepo) SetEnabled(ctx context.Context, args db.EnableMFAParams) error {

@@ -19,12 +19,7 @@ func NewAuthMiddleWare(repo *repository.Repositories) *AuthMiddleware {
 	}
 }
 
-func (am *AuthMiddleware) JWTAuthMiddleware(scope ...string) gin.HandlerFunc {
-	var scopeStr string = ScopeAccess
-	if len(scope) != 0 {
-		scopeStr = scope[0]
-	}
-
+func (am *AuthMiddleware) JWTAuthMiddleware(allowedScopes ...string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		accessToken, err := ctx.Cookie(AccessTokenCookie)
 		if accessToken == "" {
@@ -32,7 +27,12 @@ func (am *AuthMiddleware) JWTAuthMiddleware(scope ...string) gin.HandlerFunc {
 			return
 		}
 
-		claims, err := ValidateJWT(accessToken, scopeStr)
+		scopes := allowedScopes
+		if len(scopes) == 0 {
+			scopes = []string{ScopeAccess}
+		}
+
+		claims, err := ValidateJWT(accessToken, scopes...)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid Token"})
 			return

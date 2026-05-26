@@ -10,23 +10,30 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+func mustReadRand(key []byte) {
+	_, err := rand.Read(key)
+	if err != nil {
+		panic(fmt.Sprintf("crypto/rand.Read failed: %v", err))
+	}
+}
+
 func GetRandomKeyHex(length uint8) string {
 	key := make([]byte, length)
-	_, _ = rand.Read(key)
+	mustReadRand(key)
 
 	return hex.EncodeToString(key)
 }
 
 func GetRandomKeyB64(length uint8) string {
 	key := make([]byte, length)
-	_, _ = rand.Read(key)
+	mustReadRand(key)
 
 	return base64.URLEncoding.EncodeToString(key)
 }
 
 func GetRandomKeyB32(length uint8) string {
 	key := make([]byte, length)
-	_, _ = rand.Read(key)
+	mustReadRand(key)
 
 	return base32.StdEncoding.EncodeToString(key)
 }
@@ -65,7 +72,7 @@ func ParsePayloadedAPIKey(tokenstring, jwtSecret string) (map[string]interface{}
 		return claims, nil
 	}
 
-	return nil, err
+	return nil, fmt.Errorf("invalid or unverifiable token claims")
 }
 
 func DecryptAndParseAPIKey(nonceHex, ciphertextHex string, jwtSecret, aesSecret string) (map[string]interface{}, error) {

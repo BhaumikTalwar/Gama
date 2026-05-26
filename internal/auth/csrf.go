@@ -32,8 +32,8 @@ func CSRFMiddleware() gin.HandlerFunc {
 			}
 
 			csrfFromCookie, err := c.Cookie(CSRFCookie)
-			if err != nil || csrfFromHeader == "" {
-				c.JSON(http.StatusForbidden, gin.H{"error": "missing CSRF header"})
+			if err != nil {
+				c.JSON(http.StatusForbidden, gin.H{"error": "missing CSRF cookie"})
 				c.Abort()
 				return
 			}

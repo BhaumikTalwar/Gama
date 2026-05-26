@@ -45,7 +45,7 @@ func GenerateJWT(userID, role string, ver int, scope string) (string, error) {
 	return accessToken.SignedString([]byte(appConfig.JWTKey))
 }
 
-func ValidateJWT(tokenString string, scope string) (*JWTClaims, error) {
+func ValidateJWT(tokenString string, allowedScopes ...string) (*JWTClaims, error) {
 	appConfig := config.GetAppConfig()
 	if tokenString == "" {
 		return nil, fmt.Errorf("token string cannot be empty")
@@ -77,8 +77,17 @@ func ValidateJWT(tokenString string, scope string) (*JWTClaims, error) {
 		return nil, fmt.Errorf("invalid token claims type")
 	}
 
-	if claims.Scope != scope {
-		return nil, fmt.Errorf("Invalid Scope of Token")
+	if len(allowedScopes) > 0 {
+		scopeValid := false
+		for _, s := range allowedScopes {
+			if claims.Scope == s {
+				scopeValid = true
+				break
+			}
+		}
+		if !scopeValid {
+			return nil, fmt.Errorf("Invalid Scope of Token")
+		}
 	}
 
 	return claims, nil

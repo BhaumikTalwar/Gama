@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"image/png"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -50,7 +51,7 @@ type RegisterRequest struct {
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input", "error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input"})
 		return
 	}
 
@@ -136,7 +137,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 			}
 		}
 
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to create user", "error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to create user"})
 		return
 	}
 
@@ -232,7 +233,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 		sessionID, err = h.SmsOtpService.Send(code, *phoneNumber)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to send OTP", "error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to send OTP"})
 			return
 		}
 
@@ -291,7 +292,11 @@ func (h *AuthHandler) InitMFASetup(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
 		return
 	}
-	userID := userIDVal.(uuid.UUID)
+	userID, ok := userIDVal.(uuid.UUID)
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": "Invalid user ID in context"})
+		return
+	}
 	user, err := h.repos.User.GetByID(c.Request.Context(), userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "No Such User Exist"})
@@ -315,12 +320,15 @@ func (h *AuthHandler) InitMFASetup(c *gin.Context) {
 			return
 		}
 
-		h.repos.MFA.UpsertSettings(c.Request.Context(), db.UpsertMFASettingsParams{
+		if _, err := h.repos.MFA.UpsertSettings(c.Request.Context(), db.UpsertMFASettingsParams{
 			UserID:    userID,
 			SecretKey: &encryptedSecret,
 			Method:    db.MfaTypeTotp,
 			Enabled:   false,
-		})
+		}); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to save MFA settings"})
+			return
+		}
 
 		var buf bytes.Buffer
 		img, err := key.Image(200, 200)
@@ -349,7 +357,7 @@ func (h *AuthHandler) InitMFASetup(c *gin.Context) {
 
 		sessionID, err := h.SmsOtpService.Send(code, phoneNumber)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to send OTP", "error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to send OTP"})
 			return
 		}
 
@@ -372,12 +380,15 @@ func (h *AuthHandler) InitMFASetup(c *gin.Context) {
 			return
 		}
 
-		h.repos.MFA.UpsertSettings(c.Request.Context(), db.UpsertMFASettingsParams{
+		if _, err := h.repos.MFA.UpsertSettings(c.Request.Context(), db.UpsertMFASettingsParams{
 			UserID:      userID,
 			Method:      db.MfaTypeSms,
 			PhoneNumber: &phoneNumber,
 			Enabled:     false,
-		})
+		}); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to save MFA settings"})
+			return
+		}
 		c.JSON(http.StatusOK, gin.H{
 			"message":    "OTP sent",
 			"session_id": sessionID,
@@ -402,7 +413,11 @@ func (h *AuthHandler) FinalizeMFASetup(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
 		return
 	}
-	userID := userIDVal.(uuid.UUID)
+	userID, ok := userIDVal.(uuid.UUID)
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": "Invalid user ID in context"})
+		return
+	}
 
 	settings, err := h.repos.MFA.GetSettings(c.Request.Context(), userID)
 	if err != nil {
@@ -471,7 +486,9 @@ func (h *AuthHandler) FinalizeMFASetup(c *gin.Context) {
 			return
 		}
 		valid = true
-		h.repos.Token.MarkTokenUsed(c.Request.Context(), token.ID)
+		if err := h.repos.Token.MarkTokenUsed(c.Request.Context(), token.ID); err != nil {
+			slog.Warn("failed to mark SMS OTP token as used", "error", err)
+		}
 	}
 
 	if !valid {
@@ -485,14 +502,21 @@ func (h *AuthHandler) FinalizeMFASetup(c *gin.Context) {
 		bk := utils.GetRandomKeyB64(32)
 		backupCodes = append(backupCodes, bk)
 
-		bkHash, _ := utils.HashPassword(bk)
+		bkHash, err := utils.HashPassword(bk)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate backup codes"})
+			return
+		}
 		backupBcryptCodes = append(backupBcryptCodes, bkHash)
 	}
 
-	h.repos.MFA.SetEnabled(c.Request.Context(), db.EnableMFAParams{
+	if err := h.repos.MFA.SetEnabled(c.Request.Context(), db.EnableMFAParams{
 		UserID:      userID,
 		BackupCodes: backupBcryptCodes,
-	})
+	}); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to enable MFA"})
+		return
+	}
 
 	user, err := h.repos.User.GetByID(c.Request.Context(), userID)
 	if err != nil {
@@ -544,7 +568,11 @@ func (h *AuthHandler) VerifyMFA(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
 		return
 	}
-	userID := userIDVal.(uuid.UUID)
+	userID, ok := userIDVal.(uuid.UUID)
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": "Invalid user ID in context"})
+		return
+	}
 
 	settings, err := h.repos.MFA.GetSettings(c.Request.Context(), userID)
 	if err != nil {
@@ -618,7 +646,9 @@ func (h *AuthHandler) VerifyMFA(c *gin.Context) {
 			return
 		}
 		valid = true
-		h.repos.Token.MarkTokenUsed(c.Request.Context(), token.ID)
+		if err := h.repos.Token.MarkTokenUsed(c.Request.Context(), token.ID); err != nil {
+			slog.Warn("failed to mark SMS OTP token as used", "error", err)
+		}
 	}
 
 	if !valid {
@@ -670,7 +700,11 @@ func (h *AuthHandler) ResendMFAOTP(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
 		return
 	}
-	userID := userIDVal.(uuid.UUID)
+	userID, ok := userIDVal.(uuid.UUID)
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": "Invalid user ID in context"})
+		return
+	}
 
 	settings, err := h.repos.MFA.GetSettings(c.Request.Context(), userID)
 	if err != nil {
@@ -697,7 +731,7 @@ func (h *AuthHandler) ResendMFAOTP(c *gin.Context) {
 
 	sessionID, err := h.SmsOtpService.Send(code, *phoneNumber)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to send OTP", "error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to send OTP"})
 		return
 	}
 
@@ -747,10 +781,12 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 
 	if tokenModel.ExpiresAt.Before(time.Now()) {
 		reason := "Expired"
-		_ = h.repos.Token.RevokeRefreshToken(c.Request.Context(), db.RevokeRefreshTokenParams{
+		if err := h.repos.Token.RevokeRefreshToken(c.Request.Context(), db.RevokeRefreshTokenParams{
 			ID:            tokenModel.ID,
 			RevokedReason: &reason,
-		})
+		}); err != nil {
+			slog.Warn("failed to revoke expired refresh token", "error", err)
+		}
 		ClearAuthCookies(c, isProd)
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Refresh token expired"})
 		return
@@ -823,15 +859,17 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 
 	tokenModel, err := h.repos.Token.GetRefreshToken(c.Request.Context(), HashRefToken(refToken, config.GetAppConfig().AppSecret))
 	if err != nil || tokenModel.Revoked {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Refresh token not Invalid"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Refresh token is invalid or has been revoked"})
 		return
 	}
 
 	reason := "Expired"
-	_ = h.repos.Token.RevokeRefreshToken(c.Request.Context(), db.RevokeRefreshTokenParams{
+	if err := h.repos.Token.RevokeRefreshToken(c.Request.Context(), db.RevokeRefreshTokenParams{
 		ID:            tokenModel.ID,
 		RevokedReason: &reason,
-	})
+	}); err != nil {
+		slog.Warn("failed to revoke refresh token during logout", "error", err)
+	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
 }
@@ -878,9 +916,9 @@ func (h *AuthHandler) Me(c *gin.Context) {
 }
 
 type UpdateProfileRequest struct {
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	AvatarURL string `json:"avatar_url"`
+	FirstName *string `json:"first_name"`
+	LastName  *string `json:"last_name"`
+	AvatarURL *string `json:"avatar_url"`
 }
 
 func (h *AuthHandler) UpdateProfile(c *gin.Context) {
@@ -898,22 +936,18 @@ func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 
 	var req UpdateProfileRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input", "error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input"})
 		return
 	}
 
-	firstName := req.FirstName
-	lastName := req.LastName
-	avatarURL := req.AvatarURL
-
 	_, err := h.repos.User.Update(c.Request.Context(), db.UpdateUserParams{
 		ID:        userID,
-		FirstName: &firstName,
-		LastName:  &lastName,
-		AvatarUrl: &avatarURL,
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		AvatarUrl: req.AvatarURL,
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to update profile", "error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to update profile"})
 		return
 	}
 
@@ -932,11 +966,15 @@ func (h *AuthHandler) ChangePassword(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
 		return
 	}
-	userID := userIDVal.(uuid.UUID)
+	userID, ok := userIDVal.(uuid.UUID)
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": "Invalid user ID in context"})
+		return
+	}
 
 	var req ChangePasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input", "error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input"})
 		return
 	}
 

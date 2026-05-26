@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"net"
+	"net/url"
 	"os"
 
 	"github.com/BhaumikTalwar/Gama/config"
@@ -14,7 +15,8 @@ import (
 
 func NewPool(ctx context.Context, appName string, cfg *config.PostgresConfig) (*pgxpool.Pool, error) {
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
-		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Database, cfg.SSLMode)
+		url.QueryEscape(cfg.User), url.QueryEscape(cfg.Password),
+		cfg.Host, cfg.Port, cfg.Database, cfg.SSLMode)
 
 	poolConfig, err := pgxpool.ParseConfig(dsn)
 	if err != nil {

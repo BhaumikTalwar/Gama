@@ -13,7 +13,7 @@ func NewMockOtpService(logger *slog.Logger) OtpService {
 }
 
 func (s *MockOtpService) Send(otp string, to string) (string, error) {
-	s.logger.Info("Executing Mock OTP", "otp", otp, "to", to)
-	s.logger.Info("Mock SMS sent", "to", to, "otp", otp)
+	s.logger.Info("Executing Mock OTP", "to", to)
+	s.logger.Info("Mock SMS sent", "to", to)
 	return "mock-session-id", nil
 }

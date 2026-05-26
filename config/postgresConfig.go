@@ -114,10 +114,10 @@ func registerPostgresFlags(cmd *cobra.Command, prefix string) {
 	_ = viper.BindPFlag(prefix+".ssl_key_path", cmd.Flags().Lookup(sslKeyFlag))
 	_ = viper.BindPFlag(prefix+".ssl_ca_path", cmd.Flags().Lookup(sslCAFlag))
 
-	_ = viper.BindPFlag(prefix+".pool_max", cmd.Flags().Lookup(poolMaxFlag))
-	_ = viper.BindPFlag(prefix+".pool_min", cmd.Flags().Lookup(poolMinFlag))
-	_ = viper.BindPFlag(prefix+".pool_idle", cmd.Flags().Lookup(poolIdleFlag))
-	_ = viper.BindPFlag(prefix+".pool_acquire", cmd.Flags().Lookup(poolAcqFlag))
+	_ = viper.BindPFlag(prefix+".max_conns", cmd.Flags().Lookup(poolMaxFlag))
+	_ = viper.BindPFlag(prefix+".min_conns", cmd.Flags().Lookup(poolMinFlag))
+	_ = viper.BindPFlag(prefix+".max_conn_idle_time", cmd.Flags().Lookup(poolIdleFlag))
+	_ = viper.BindPFlag(prefix+".acquire_timeout", cmd.Flags().Lookup(poolAcqFlag))
 
 	_ = viper.BindPFlag(prefix+".connect_timeout", cmd.Flags().Lookup(connTimeFlag))
 	_ = viper.BindPFlag(prefix+".statement_timeout", cmd.Flags().Lookup(stmtTimeFlag))

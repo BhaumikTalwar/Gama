@@ -31,7 +31,7 @@ func (r *UserRepo) GetByEmail(ctx context.Context, email string) (*db.User, erro
 	if err == pgx.ErrNoRows {
 		return nil, err
 	} else if err != nil {
-		return nil, fmt.Errorf("failed to get user ID by email: %w", err)
+		return nil, fmt.Errorf("failed to get user by email: %w", err)
 	}
 
 	return &user, nil
@@ -51,7 +51,7 @@ func (r *UserRepo) GetByUsername(ctx context.Context, username string) (*db.User
 	if err == pgx.ErrNoRows {
 		return nil, err
 	} else if err != nil {
-		return nil, fmt.Errorf("failed to get user ID by email: %w", err)
+		return nil, fmt.Errorf("failed to get user by username: %w", err)
 	}
 
 	return &user, nil

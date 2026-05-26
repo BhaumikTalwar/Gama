@@ -32,6 +32,6 @@ func SetupAuthRoutes(r *gin.RouterGroup, repos *repository.Repositories, otpServ
 	}
 
 	authGroup.GET("/me", authMiddleware.JWTAuthMiddleware(), authMiddleware.RequireStrictAuth(), authHandler.Me)
-	authGroup.PUT("/profile", authMiddleware.JWTAuthMiddleware(), authMiddleware.RequireStrictAuth(), authHandler.UpdateProfile)
-	authGroup.PUT("/password", authMiddleware.JWTAuthMiddleware(), authMiddleware.RequireStrictAuth(), authHandler.ChangePassword)
+	authGroup.PUT("/profile", auth.CSRFMiddleware(), authMiddleware.JWTAuthMiddleware(), authMiddleware.RequireStrictAuth(), authHandler.UpdateProfile)
+	authGroup.PUT("/password", auth.CSRFMiddleware(), authMiddleware.JWTAuthMiddleware(), authMiddleware.RequireStrictAuth(), authHandler.ChangePassword)
 }

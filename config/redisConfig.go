@@ -77,7 +77,7 @@ func registerRedisFlags(cmd *cobra.Command, prefix string) {
 	_ = viper.BindPFlag(prefix+".read_timeout", cmd.Flags().Lookup(readTimeFlag))
 	_ = viper.BindPFlag(prefix+".write_timeout", cmd.Flags().Lookup(writeTimeFlag))
 	_ = viper.BindPFlag(prefix+".use_tls", cmd.Flags().Lookup(usetlsFlag))
-	_ = viper.BindPFlag(prefix+".tls_cer_file", cmd.Flags().Lookup(tlsFileCert))
+	_ = viper.BindPFlag(prefix+".tls_cert_file", cmd.Flags().Lookup(tlsFileCert))
 	_ = viper.BindPFlag(prefix+".tls_key_file", cmd.Flags().Lookup(tlsFileKey))
 	_ = viper.BindPFlag(prefix+".tls_ca_file", cmd.Flags().Lookup(tlsFileCA))
 }
