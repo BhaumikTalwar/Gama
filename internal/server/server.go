@@ -60,7 +60,10 @@ func RunServer() {
 		return
 	}
 
-	repos := repository.SetupPostgresRepositories(pgxPool, cacheInstance)
+	cacheService := caching.NewCacheService(cacheInstance, redisCl)
+	versionMgr := caching.NewVersionManager(redisCl)
+
+	repos := repository.SetupPostgresRepositories(pgxPool, cacheService, versionMgr, appConfig.AppName)
 
 	s3Config := config.GetS3Config()
 	s3Store, err := service.NewS3Store(s3Config.Endpoint, s3Config.Region, s3Config.AccessKey, s3Config.SecretKey, s3Config.PublicBucket, s3Config.PrivateBucket, s3Config.PublicBaseURL)
