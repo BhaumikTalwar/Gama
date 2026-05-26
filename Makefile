@@ -53,8 +53,50 @@ sqlc:
 	cd internal/db && sqlc generate
 
 test-coverage:
-	@echo "Running tests with coverage..."
-	go test -cover ./...
+	@echo "Running unit tests with cumulative coverage..."
+	go test -cover -short -count=1 ./...
+	@echo ""
+	@echo "--- Generating cumulative profile ---"
+	@mkdir -p coverage
+	go test -coverprofile=coverage/unit.out -covermode=atomic -short -count=1 ./... > /dev/null 2>&1
+	@echo "Total: $$(go tool cover -func=coverage/unit.out | grep '^total:' | awk '{print $$NF}')"
+	@rm -f coverage/unit.out
+
+test-coverage-html:
+	@echo "Generating HTML coverage report..."
+	@mkdir -p coverage
+	go test -coverprofile=coverage/unit.out -covermode=atomic -short -count=1 ./... > /dev/null 2>&1
+	go tool cover -html=coverage/unit.out -o coverage/coverage.html
+	@echo "Report: coverage/coverage.html"
+	@rm -f coverage/unit.out
+
+test-coverage-all:
+	@echo "Running all tests with cumulative coverage (requires Docker)..."
+	go test -p=1 -tags=integration -cover -count=1 ./...
+	@echo ""
+	@echo "--- Generating cumulative profile ---"
+	@mkdir -p coverage
+	go test -p=1 -tags=integration -coverprofile=coverage/all.out -covermode=atomic -count=1 ./... > /dev/null 2>&1
+	@echo "Total: $$(go tool cover -func=coverage/all.out | grep '^total:' | awk '{print $$NF}')"
+	@rm -f coverage/all.out
+
+test-unit:
+	@echo "Running unit tests..."
+	go test -short -count=1 ./...
+
+test-integration:
+	@echo "Starting test services..."
+	docker-compose up -d postgres redis
+	@echo "Waiting for services to be ready..."
+	@sleep 5
+	@echo "Running integration tests (serial, shared database)..."
+	go test -p=1 -tags=integration -count=1 -v ./internal/repository/ ./internal/auth/
+	@echo "Stopping test services..."
+	docker-compose stop postgres redis
+
+test-all:
+	@echo "Running all tests..."
+	go test -p=1 -tags=integration -count=1 -v ./...
 
 build: 
 	$(GO)  mod tidy
