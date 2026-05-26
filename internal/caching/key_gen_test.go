@@ -68,8 +68,8 @@ func TestKeyGen_VersionSorting(t *testing.T) {
 	kg := NewKeyGen("app")
 
 	versions := map[string]map[string]int64{
-		"zebra": {"1": 1},
-		"apple": {"2": 2},
+		"zebra":  {"1": 1},
+		"apple":  {"2": 2},
 		"banana": {"3": 3},
 	}
 

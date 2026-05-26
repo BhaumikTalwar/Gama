@@ -64,10 +64,10 @@ func TestTimeoutMiddleware_DifferentDurations(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	tests := []struct {
-		name        string
-		timeout     time.Duration
-		sleepDelay  time.Duration
-		expectCode  int
+		name       string
+		timeout    time.Duration
+		sleepDelay time.Duration
+		expectCode int
 	}{
 		{
 			name:       "1ms timeout should trigger for 100ms delay",

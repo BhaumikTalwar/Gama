@@ -105,11 +105,11 @@ func RunServer() {
 		telemetry.StartDBPoolCollector(ctx, metrics, func() telemetry.DBPoolStats {
 			stats := pgxPool.Stat()
 			return telemetry.DBPoolStats{
-				AcquiredConnections:   int64(stats.AcquiredConns()),
-				IdleConnections:       int64(stats.IdleConns()),
+				AcquiredConnections:     int64(stats.AcquiredConns()),
+				IdleConnections:         int64(stats.IdleConns()),
 				ConstructingConnections: int64(stats.ConstructingConns()),
-				EmptyAttempts:         stats.EmptyAcquireCount(),
-				TotalAcquired:         stats.AcquireCount(),
+				EmptyAttempts:           stats.EmptyAcquireCount(),
+				TotalAcquired:           stats.AcquireCount(),
 			}
 		}, 15*time.Second)
 	}

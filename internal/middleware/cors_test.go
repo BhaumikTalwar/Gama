@@ -65,8 +65,6 @@ func TestCORSMiddleware_HandlesMultipleOrigins(t *testing.T) {
 	}
 }
 
-
-
 func TestCORSMiddleware_AllowsCorrectHeaders(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
@@ -83,4 +81,3 @@ func TestCORSMiddleware_AllowsCorrectHeaders(t *testing.T) {
 
 	assert.NotEmpty(t, w.Header().Get("Access-Control-Allow-Headers"))
 }
-

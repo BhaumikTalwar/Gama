@@ -8,7 +8,7 @@ import (
 
 func TestComputeStatus_NilComponents(t *testing.T) {
 	response := &HealthResponse{
-		Status:    "initial",
+		Status:     "initial",
 		Components: nil,
 	}
 
@@ -18,7 +18,7 @@ func TestComputeStatus_NilComponents(t *testing.T) {
 
 func TestComputeStatus_AllHealthy(t *testing.T) {
 	response := &HealthResponse{
-		Status:    "healthy",
+		Status: "healthy",
 		Components: map[string]ComponentHealth{
 			"database": {Status: "healthy"},
 			"redis":    {Status: "healthy"},
@@ -31,7 +31,7 @@ func TestComputeStatus_AllHealthy(t *testing.T) {
 
 func TestComputeStatus_OneUnhealthy(t *testing.T) {
 	response := &HealthResponse{
-		Status:    "healthy",
+		Status: "healthy",
 		Components: map[string]ComponentHealth{
 			"database": {Status: "healthy"},
 			"redis":    {Status: "unhealthy", Error: "connection failed"},
@@ -44,7 +44,7 @@ func TestComputeStatus_OneUnhealthy(t *testing.T) {
 
 func TestComputeStatus_OneDegraded(t *testing.T) {
 	response := &HealthResponse{
-		Status:    "healthy",
+		Status: "healthy",
 		Components: map[string]ComponentHealth{
 			"database": {Status: "healthy"},
 			"s3":       {Status: "degraded"},
@@ -57,7 +57,7 @@ func TestComputeStatus_OneDegraded(t *testing.T) {
 
 func TestComputeStatus_UnhealthyTakesPrecedence(t *testing.T) {
 	response := &HealthResponse{
-		Status:    "healthy",
+		Status: "healthy",
 		Components: map[string]ComponentHealth{
 			"database": {Status: "degraded"},
 			"redis":    {Status: "unhealthy"},
@@ -81,7 +81,7 @@ func TestComputeStatus_EmptyComponents(t *testing.T) {
 
 func TestComputeStatus_MixedHealthyAndDegraded(t *testing.T) {
 	response := &HealthResponse{
-		Status:    "healthy",
+		Status: "healthy",
 		Components: map[string]ComponentHealth{
 			"database": {Status: "healthy"},
 			"redis":    {Status: "healthy"},

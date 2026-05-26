@@ -10,12 +10,12 @@ import (
 )
 
 type BaseRepo struct {
-	db            *db.Queries
-	cache         caching.CacheService
-	versionMgr    *caching.VersionManager
-	keyGen        *caching.KeyGen
-	namespace     string
-	inTx          bool
+	db         *db.Queries
+	cache      caching.CacheService
+	versionMgr *caching.VersionManager
+	keyGen     *caching.KeyGen
+	namespace  string
+	inTx       bool
 }
 
 func NewBaseRepo(

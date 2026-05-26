@@ -15,20 +15,20 @@ type Metrics struct {
 	HTTPRequestDuration *prometheus.HistogramVec
 	HTTPInFlight        prometheus.Gauge
 
-	DBPoolConnections   *prometheus.GaugeVec
-	DBPoolEmptyCurrent  prometheus.Gauge
-	DBPoolAcquiresTotal prometheus.Counter
+	DBPoolConnections     *prometheus.GaugeVec
+	DBPoolEmptyCurrent    prometheus.Gauge
+	DBPoolAcquiresTotal   prometheus.Counter
 	DBPoolAcquireDuration prometheus.Histogram
-	DBPoolEmptyAttempts  prometheus.Counter
+	DBPoolEmptyAttempts   prometheus.Counter
 
-	CacheHits   prometheus.Counter
-	CacheMisses prometheus.Counter
+	CacheHits     prometheus.Counter
+	CacheMisses   prometheus.Counter
 	CacheHitRatio prometheus.Gauge
 
-	SystemMemAlloc    prometheus.Gauge
-	SystemMemSys      prometheus.Gauge
-	SystemGoroutines  prometheus.Gauge
-	SystemGCDuration  prometheus.Gauge
+	SystemMemAlloc   prometheus.Gauge
+	SystemMemSys     prometheus.Gauge
+	SystemGoroutines prometheus.Gauge
+	SystemGCDuration prometheus.Gauge
 }
 
 func NewMetrics(serviceName string) *Metrics {
@@ -215,11 +215,11 @@ func (m *Metrics) RecordSystemMetrics() {
 }
 
 type DBPoolStats struct {
-	AcquiredConnections   int64
-	IdleConnections       int64
+	AcquiredConnections     int64
+	IdleConnections         int64
 	ConstructingConnections int64
-	EmptyAttempts         int64
-	TotalAcquired         int64
+	EmptyAttempts           int64
+	TotalAcquired           int64
 }
 
 func statusCodeToString(status int) string {

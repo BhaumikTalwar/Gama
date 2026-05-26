@@ -100,8 +100,6 @@ func TestEncryptDecryptAES_InvalidKeyLength(t *testing.T) {
 	assert.Contains(t, err.Error(), "invalid AES key length")
 }
 
-
-
 func TestEncryptDecryptString_RawKey(t *testing.T) {
 	rawKey := []byte("0123456789abcdef0123456789abcdef")
 	plaintext := "totp-secret-value"

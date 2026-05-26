@@ -50,8 +50,8 @@ func TestCustomSlogRecovery_RecoversFromDifferentPanicTypes(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(&testWriter{}, &slog.HandlerOptions{}))
 
 	testCases := []struct {
-		name        string
-		panicValue  interface{}
+		name       string
+		panicValue interface{}
 	}{
 		{"string panic", "something went wrong"},
 		{"nil panic", nil},

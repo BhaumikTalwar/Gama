@@ -14,10 +14,10 @@ import (
 var errVersionNotFound = errors.New("version record not found")
 
 const (
-	versionPrefix     = "version"
-	localCacheSize    = 10000
-	localCacheTTL     = 10 * time.Minute
-	versionKeyTTL     = 30 * 24 * time.Hour
+	versionPrefix      = "version"
+	localCacheSize     = 10000
+	localCacheTTL      = 10 * time.Minute
+	versionKeyTTL      = 30 * 24 * time.Hour
 	entityGlobalSuffix = "global"
 )
 

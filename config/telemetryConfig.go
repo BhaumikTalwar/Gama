@@ -14,9 +14,9 @@ type TelemetryConfig struct {
 	ServiceName string `mapstructure:"service_name" yaml:"service_name"`
 	Environment string `mapstructure:"environment" yaml:"environment"`
 
-	OTLPEndpoint    string `mapstructure:"otlp_endpoint" yaml:"otlp_endpoint"`
-	OTLPEndpointHTTP string `mapstructure:"otlp_endpoint_http" yaml:"otlp_endpoint_http"`
-	TraceSampleRate float64 `mapstructure:"trace_sample_rate" yaml:"trace_sample_rate"`
+	OTLPEndpoint     string  `mapstructure:"otlp_endpoint" yaml:"otlp_endpoint"`
+	OTLPEndpointHTTP string  `mapstructure:"otlp_endpoint_http" yaml:"otlp_endpoint_http"`
+	TraceSampleRate  float64 `mapstructure:"trace_sample_rate" yaml:"trace_sample_rate"`
 
 	PrometheusPath string `mapstructure:"prometheus_path" yaml:"prometheus_path"`
 

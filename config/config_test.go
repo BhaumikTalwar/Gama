@@ -9,13 +9,13 @@ import (
 
 func TestAppConfig_ValidateValidDev(t *testing.T) {
 	cfg := &AppConfig{
-		AppName:             "TestApp",
-		Env:                 "dev",
-		CorsAddresses:       []string{"http://localhost:3000"},
-		AppSecret:           "12345678901234567890123456789012",
-		JWTKey:              "12345678901234567890123456789012",
-		AESKey:              "12345678901234567890123456789012",
-		AccessTokenDuration: 15 * time.Minute,
+		AppName:              "TestApp",
+		Env:                  "dev",
+		CorsAddresses:        []string{"http://localhost:3000"},
+		AppSecret:            "12345678901234567890123456789012",
+		JWTKey:               "12345678901234567890123456789012",
+		AESKey:               "12345678901234567890123456789012",
+		AccessTokenDuration:  15 * time.Minute,
 		RefreshTokenDuration: 24 * time.Hour,
 	}
 
@@ -25,13 +25,13 @@ func TestAppConfig_ValidateValidDev(t *testing.T) {
 
 func TestAppConfig_ValidateValidProd(t *testing.T) {
 	cfg := &AppConfig{
-		AppName:             "TestApp",
-		Env:                 "PROD",
-		CorsAddresses:       []string{"http://localhost:3000"},
-		AppSecret:           "12345678901234567890123456789012",
-		JWTKey:              "12345678901234567890123456789012",
-		AESKey:              "12345678901234567890123456789012",
-		AccessTokenDuration: 15 * time.Minute,
+		AppName:              "TestApp",
+		Env:                  "PROD",
+		CorsAddresses:        []string{"http://localhost:3000"},
+		AppSecret:            "12345678901234567890123456789012",
+		JWTKey:               "12345678901234567890123456789012",
+		AESKey:               "12345678901234567890123456789012",
+		AccessTokenDuration:  15 * time.Minute,
 		RefreshTokenDuration: 24 * time.Hour,
 	}
 
@@ -158,7 +158,7 @@ func TestHTTPServerConfig_ValidateValid(t *testing.T) {
 		WriteTimeout:      15 * time.Second,
 		IdleTimeout:       2 * time.Minute,
 		MaxHeaderBytes:    1 << 20,
-		ShutdownTimeout:    10 * time.Second,
+		ShutdownTimeout:   10 * time.Second,
 		KeepAlive:         true,
 	}
 
@@ -175,7 +175,7 @@ func TestHTTPServerConfig_ValidateEmptyHost(t *testing.T) {
 		WriteTimeout:      15 * time.Second,
 		IdleTimeout:       2 * time.Minute,
 		MaxHeaderBytes:    1 << 20,
-		ShutdownTimeout:    10 * time.Second,
+		ShutdownTimeout:   10 * time.Second,
 	}
 
 	err := cfg.validate()
@@ -192,7 +192,7 @@ func TestHTTPServerConfig_ValidateInvalidPort(t *testing.T) {
 		WriteTimeout:      15 * time.Second,
 		IdleTimeout:       2 * time.Minute,
 		MaxHeaderBytes:    1 << 20,
-		ShutdownTimeout:    10 * time.Second,
+		ShutdownTimeout:   10 * time.Second,
 	}
 
 	err := cfg.validate()
@@ -209,7 +209,7 @@ func TestHTTPServerConfig_ValidatePortZero(t *testing.T) {
 		WriteTimeout:      15 * time.Second,
 		IdleTimeout:       2 * time.Minute,
 		MaxHeaderBytes:    1 << 20,
-		ShutdownTimeout:    10 * time.Second,
+		ShutdownTimeout:   10 * time.Second,
 	}
 
 	err := cfg.validate()
@@ -226,7 +226,7 @@ func TestHTTPServerConfig_ValidatePortTooHigh(t *testing.T) {
 		WriteTimeout:      15 * time.Second,
 		IdleTimeout:       2 * time.Minute,
 		MaxHeaderBytes:    1 << 20,
-		ShutdownTimeout:    10 * time.Second,
+		ShutdownTimeout:   10 * time.Second,
 	}
 
 	err := cfg.validate()
@@ -243,7 +243,7 @@ func TestHTTPServerConfig_ValidateZeroReadTimeout(t *testing.T) {
 		WriteTimeout:      15 * time.Second,
 		IdleTimeout:       2 * time.Minute,
 		MaxHeaderBytes:    1 << 20,
-		ShutdownTimeout:    10 * time.Second,
+		ShutdownTimeout:   10 * time.Second,
 	}
 
 	err := cfg.validate()
@@ -260,7 +260,7 @@ func TestHTTPServerConfig_ValidateZeroMaxHeaderBytes(t *testing.T) {
 		WriteTimeout:      15 * time.Second,
 		IdleTimeout:       2 * time.Minute,
 		MaxHeaderBytes:    0,
-		ShutdownTimeout:    10 * time.Second,
+		ShutdownTimeout:   10 * time.Second,
 	}
 
 	err := cfg.validate()
@@ -277,7 +277,7 @@ func TestHTTPServerConfig_ValidateMaxHeaderBytesTooLarge(t *testing.T) {
 		WriteTimeout:      15 * time.Second,
 		IdleTimeout:       2 * time.Minute,
 		MaxHeaderBytes:    20 << 20,
-		ShutdownTimeout:    10 * time.Second,
+		ShutdownTimeout:   10 * time.Second,
 	}
 
 	err := cfg.validate()
@@ -287,7 +287,7 @@ func TestHTTPServerConfig_ValidateMaxHeaderBytesTooLarge(t *testing.T) {
 
 func TestCacheConfig_ValidateValid(t *testing.T) {
 	cfg := &CacheConfig{
-		CacheNamespace:  "app_cache",
+		CacheNamespace:   "app_cache",
 		EnableLocalCache: true,
 		LocalCacheSize:   400,
 		LocalCacheTTL:    5,
@@ -300,7 +300,7 @@ func TestCacheConfig_ValidateValid(t *testing.T) {
 
 func TestCacheConfig_ValidateEmptyNamespace(t *testing.T) {
 	cfg := &CacheConfig{
-		CacheNamespace:  "   ",
+		CacheNamespace:   "   ",
 		EnableLocalCache: true,
 		LocalCacheSize:   400,
 		LocalCacheTTL:    5,
@@ -314,7 +314,7 @@ func TestCacheConfig_ValidateEmptyNamespace(t *testing.T) {
 
 func TestCacheConfig_ValidateZeroLocalCacheSize(t *testing.T) {
 	cfg := &CacheConfig{
-		CacheNamespace:  "app_cache",
+		CacheNamespace:   "app_cache",
 		EnableLocalCache: true,
 		LocalCacheSize:   0,
 		LocalCacheTTL:    5,
@@ -328,7 +328,7 @@ func TestCacheConfig_ValidateZeroLocalCacheSize(t *testing.T) {
 
 func TestCacheConfig_ValidateTooSmallLocalCacheSize(t *testing.T) {
 	cfg := &CacheConfig{
-		CacheNamespace:  "app_cache",
+		CacheNamespace:   "app_cache",
 		EnableLocalCache: true,
 		LocalCacheSize:   16,
 		LocalCacheTTL:    5,
@@ -342,7 +342,7 @@ func TestCacheConfig_ValidateTooSmallLocalCacheSize(t *testing.T) {
 
 func TestCacheConfig_ValidateZeroLocalCacheTTL(t *testing.T) {
 	cfg := &CacheConfig{
-		CacheNamespace:  "app_cache",
+		CacheNamespace:   "app_cache",
 		EnableLocalCache: true,
 		LocalCacheSize:   400,
 		LocalCacheTTL:    0,
@@ -356,7 +356,7 @@ func TestCacheConfig_ValidateZeroLocalCacheTTL(t *testing.T) {
 
 func TestCacheConfig_ValidateInvalidCodec(t *testing.T) {
 	cfg := &CacheConfig{
-		CacheNamespace:  "app_cache",
+		CacheNamespace:   "app_cache",
 		EnableLocalCache: true,
 		LocalCacheSize:   400,
 		LocalCacheTTL:    5,
@@ -370,7 +370,7 @@ func TestCacheConfig_ValidateInvalidCodec(t *testing.T) {
 
 func TestCacheConfig_ValidateMsgpackCodec(t *testing.T) {
 	cfg := &CacheConfig{
-		CacheNamespace:  "app_cache",
+		CacheNamespace:   "app_cache",
 		EnableLocalCache: true,
 		LocalCacheSize:   400,
 		LocalCacheTTL:    5,
@@ -383,7 +383,7 @@ func TestCacheConfig_ValidateMsgpackCodec(t *testing.T) {
 
 func TestCacheConfig_ValidateLocalCacheDisabled(t *testing.T) {
 	cfg := &CacheConfig{
-		CacheNamespace:  "app_cache",
+		CacheNamespace:   "app_cache",
 		EnableLocalCache: false,
 		LocalCacheSize:   0,
 		LocalCacheTTL:    0,
